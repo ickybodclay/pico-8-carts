@@ -2,12 +2,14 @@ pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
 
-bullet = {}       -- array of bullets
-enemy = {}        -- array of enemies
-t = 0             -- time
-anim_update = 10  -- animation update delay
-shot_cooldown = 4 -- shot cooldown
-can_shoot = true  -- shot cooldown flag
+bullet = {}           -- array of bullets
+enemy = {}            -- array of enemies
+t = 0                 -- time
+anim_update = 10      -- animation update delay
+shot_cooldown = 5     -- shot cooldown
+shot_t = 0            -- shot cooldown timer
+can_shoot = true      -- shot cooldown flag
+spawn_t = rnd(15) + 5
 
 function _init()
   srand(time())
@@ -20,42 +22,33 @@ function _init()
   ship.spr = 1
   ship.frame = 0
   ship.frames = 1
-  ship.speed = 1
+  ship.speed = 3
   ship.kind = 1
 
-  local badguy1 = {}
-  badguy1.x = 32
-  badguy1.y = 10
-  badguy1.w = 4
-  badguy1.h = 2
-  badguy1.spr = 3
-  badguy1.frame = 0
-  badguy1.frames = 2
-  badguy1.kind = 2
+  make_enemy(32, 10)
+end
 
-  local badguy2 = {}
-  badguy2.x = 64
-  badguy2.y = 10
-  badguy2.w = 4
-  badguy2.h = 2
-  badguy2.spr = 3
-  badguy2.frame = 0
-  badguy2.frames = 2
-  badguy2.kind = 2
+function make_enemy(x, y)
+  local badguy = {}
+  badguy.x = x
+  badguy.y = y
+  badguy.w = 4
+  badguy.h = 2
+  badguy.spr = 3
+  badguy.frame = 0
+  badguy.frames = 2
+  badguy.kind = 2
 
-  local badguy3 = {}
-  badguy3.x = 96
-  badguy3.y = 10
-  badguy3.w = 4
-  badguy3.h = 2
-  badguy3.spr = 3
-  badguy3.frame = 0
-  badguy3.frames = 2
-  badguy3.kind = 2
+  add(enemy, badguy)
+end
 
-  add(enemy, badguy1)
-  add(enemy, badguy2)
-  add(enemy, badguy3)
+function make_explosion(x, y)
+  local explode = {}
+  explode.x = x
+  explode.y = y
+  explode.spr = 5
+  explode.frame = 0
+  explode.frames = 3
 end
 
 function _draw()
@@ -78,8 +71,13 @@ end
 function _update()
   control_ship()
   foreach(bullet, update_bullet)
+  foreach(enemy, update_enemy)
   check_collisions()
-  if(not can_shoot and (t % shot_cooldown) == 0) can_shoot = true
+  if (not can_shoot and (t > (shot_t + shot_cooldown))) can_shoot = true
+  if (t >= spawn_t) then
+    make_enemy(rnd(108) + 10, 0)
+    spawn_t = t + rnd(60) + 5
+  end
 
   t += 1
 end
@@ -130,6 +128,12 @@ function update_bullet(b)
   end
 end
 
+function update_enemy(e)
+  e.y += 0.1
+
+  if (e.y > 128) del(enemy, e)
+end
+
 function shoot()
   if (not can_shoot) return
 
@@ -144,7 +148,9 @@ function shoot()
   b.frames = 1
   b.kind = 3
   add(bullet, b)
+
   can_shoot = false
+  shot_t = t
   sfx(0)
 end
 

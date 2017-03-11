@@ -2,36 +2,116 @@ pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
 
--- array of bullets
-bullet = {}
-t=0
-can_shoot = true
+bullet = {}       -- array of bullets
+enemy = {}        -- array of enemies
+t = 0             -- time
+anim_update = 10  -- animation update delay
+shot_cooldown = 4 -- shot cooldown
+can_shoot = true  -- shot cooldown flag
 
 function _init()
+  srand(time())
+
   ship = {}
   ship.x = 128/2
   ship.y = 128-16
+  ship.w = 4
+  ship.h = 2
   ship.spr = 1
+  ship.frame = 0
+  ship.frames = 1
   ship.speed = 1
+  ship.kind = 1
+
+  local badguy1 = {}
+  badguy1.x = 32
+  badguy1.y = 10
+  badguy1.w = 4
+  badguy1.h = 2
+  badguy1.spr = 3
+  badguy1.frame = 0
+  badguy1.frames = 2
+  badguy1.kind = 2
+
+  local badguy2 = {}
+  badguy2.x = 64
+  badguy2.y = 10
+  badguy2.w = 4
+  badguy2.h = 2
+  badguy2.spr = 3
+  badguy2.frame = 0
+  badguy2.frames = 2
+  badguy2.kind = 2
+
+  local badguy3 = {}
+  badguy3.x = 96
+  badguy3.y = 10
+  badguy3.w = 4
+  badguy3.h = 2
+  badguy3.spr = 3
+  badguy3.frame = 0
+  badguy3.frames = 2
+  badguy3.kind = 2
+
+  add(enemy, badguy1)
+  add(enemy, badguy2)
+  add(enemy, badguy3)
 end
 
 function _draw()
   cls(5)
   draw_actor(ship)
   foreach(bullet, draw_actor)
-  print("t = " .. t, 32, 10, 6)
+  foreach(enemy, draw_actor)
+  --print("t = " .. t, 96, 5, 6)
 end
 
 function draw_actor(actor)
-  spr(actor.spr, actor.x, actor.y)
+  spr(actor.spr + actor.frame, actor.x, actor.y)
+
+  if ((t % anim_update) == 0) then
+    actor.frame += 1
+    actor.frame %= actor.frames
+  end
 end
 
 function _update()
   control_ship()
   foreach(bullet, update_bullet)
-  if(not can_shoot and (t%4) == 0) can_shoot=true
+  check_collisions()
+  if(not can_shoot and (t % shot_cooldown) == 0) can_shoot = true
 
   t += 1
+end
+
+function collide_event(a1, a2)
+  if (a1.kind == 3) then
+    if (a2.kind == 2) then
+      del(bullet, a1)
+      del(enemy, a2)
+      sfx(1)
+    end
+  end
+end
+
+function collide(a1, a2)
+  if (a1 == a2) return
+
+  local dx = a1.x - a2.x
+  local dy = a1.y - a2.y
+  if (abs(dx) < (a1.w + a2.w)) then
+    if (abs(dy) < (a1.h + a2.h)) then
+      collide_event(a1, a2)
+    end
+  end
+end
+
+function check_collisions()
+  for b in all(bullet) do
+    for e in all(enemy) do
+      collide(b, e)
+    end
+  end
 end
 
 function control_ship()
@@ -56,10 +136,16 @@ function shoot()
   local b = {}
   b.x = ship.x
   b.y = ship.y
+  b.w = 4
+  b.h = 2
   b.speed = 5
   b.spr = 2
+  b.frame = 0
+  b.frames = 1
+  b.kind = 3
   add(bullet, b)
   can_shoot = false
+  sfx(0)
 end
 
 __gfx__
@@ -229,8 +315,8 @@ __map__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00010000292502f25033250342502c250272502025000200002000020000200002000020000200002000020000200002000020000200002000020000200002000020000200002000020000200002000020000200
+010900000a6503465037650356502c6502a6502865026650376502e6502b6502b65019650186501865006650046501a6000760009600196001860018600246000c6000c600006000060000600006000060000600
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

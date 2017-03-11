@@ -4,6 +4,7 @@ __lua__
 
 bullet = {}           -- array of bullets
 enemy = {}            -- array of enemies
+explosion = {}
 t = 0                 -- time
 anim_update = 10      -- animation update delay
 shot_cooldown = 5     -- shot cooldown
@@ -49,6 +50,8 @@ function make_explosion(x, y)
   explode.spr = 5
   explode.frame = 0
   explode.frames = 3
+  explode.kind = 666
+  add(explosion, explode)
 end
 
 function _draw()
@@ -56,6 +59,7 @@ function _draw()
   draw_actor(ship)
   foreach(bullet, draw_actor)
   foreach(enemy, draw_actor)
+  foreach(explosion, draw_actor)
   --print("t = " .. t, 96, 5, 6)
 end
 
@@ -65,6 +69,8 @@ function draw_actor(actor)
   if ((t % anim_update) == 0) then
     actor.frame += 1
     actor.frame %= actor.frames
+
+    if (actor.kind == 666 and actor.frame == 0) del(explosion, actor)
   end
 end
 
@@ -87,6 +93,7 @@ function collide_event(a1, a2)
     if (a2.kind == 2) then
       del(bullet, a1)
       del(enemy, a2)
+      make_explosion(a2.x, a2.y)
       sfx(1)
     end
   end

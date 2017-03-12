@@ -171,7 +171,9 @@ function collide_event(a, b)
       del(enemy, b)
       make_explosion(b.x, b.y)
       sfx(1)
-    elseif (b.kind == 666) then
+    end
+
+    if (b.kind == 666) then
       del(bullet, a)
       make_explosion(a.x, a.y)
       sfx(1)
